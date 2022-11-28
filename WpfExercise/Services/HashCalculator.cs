@@ -4,6 +4,9 @@ using System.Security.Cryptography;
 
 namespace WpfExercise.Services;
 
+/// <summary>
+/// Calculates a hash on a file to detect changes
+/// </summary>
 public static class HashCalculator
 {
     public static string ComputeHash(string filePath)

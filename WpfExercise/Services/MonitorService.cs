@@ -18,29 +18,56 @@ public class FileUpdatedEventArgs : EventArgs
 public interface IMonitorService
 {
     Task MonitorFile();
+
     void Cancel();
 
     event EventHandler<FileUpdatedEventArgs>? FileUpdatedEvent;
 }
 
+/// <summary>
+/// Monitors a json file and report changes
+/// </summary>
 public class MonitorService : IMonitorService
 {
+    #region Private Fields    
+    
     private static readonly log4net.ILog Logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod()?.DeclaringType);
 
     private readonly CancellationTokenSource _cts = new();
     private readonly IDialogService _dialogService;
 
     private string _previousHash = string.Empty;
-    
+
+    #endregion
+
+    #region Constructor        
+
     public MonitorService(IDialogService dialogService)
     {
         _dialogService = dialogService;
     }
 
+    #endregion
+
+    #region Events
+
     public event EventHandler<FileUpdatedEventArgs>? FileUpdatedEvent;
+
+    #endregion
+
+    #region Properties
 
     public string JsonFileName { get; set; } = "products.json";
 
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Start to monitor json file for changes
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="FileNotFoundException"></exception>
     public async Task MonitorFile()
     {
         Logger.Info("Starting Monitor Service");
@@ -51,11 +78,20 @@ public class MonitorService : IMonitorService
         await Task.Run(() => MonitorJsonFile(_cts.Token));
     }
 
+    /// <summary>
+    /// Cancel monitor service
+    /// </summary>
     public void Cancel()
     {
         _cts.Cancel();
     }
 
+    /// <summary>
+    /// Monitor json file for changes each second.
+    /// Raise event if file content is changed. 
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns></returns>
     private async Task MonitorJsonFile(CancellationToken ct)
     {
         try
@@ -69,7 +105,7 @@ public class MonitorService : IMonitorService
                 var hash = HashCalculator.ComputeHash(JsonFileName);
 
                 //File changed?
-                if (hash != _previousHash) 
+                if (hash != _previousHash)
                     GetAndReportProducts();
 
                 _previousHash = hash;
@@ -88,6 +124,9 @@ public class MonitorService : IMonitorService
         }
     }
 
+    /// <summary>
+    /// Read json file and raise FileUpdatedEvent
+    /// </summary>
     private void GetAndReportProducts()
     {
         using var sr = new StreamReader(JsonFileName);
@@ -97,4 +136,6 @@ public class MonitorService : IMonitorService
         if (productList != null)
             FileUpdatedEvent?.Invoke(this, new FileUpdatedEventArgs(productList));
     }
+
+    #endregion
 }

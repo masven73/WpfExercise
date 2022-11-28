@@ -10,6 +10,10 @@ public partial class MainWindow
         InitializeComponent();
     }
 
+
+    /// <summary>
+    /// Call cancel method on vm when window is closed
+    /// </summary>
     private void MainWindowOnClosing(object? sender, CancelEventArgs e)
     {
         var vm = (MainWindowViewModel)DataContext;

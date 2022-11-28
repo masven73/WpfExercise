@@ -1,4 +1,5 @@
-﻿using MvvmHelpers;
+﻿using System;
+using MvvmHelpers;
 using Prism.Commands;
 using Prism.Mvvm;
 using System.Collections.Generic;
@@ -11,16 +12,23 @@ namespace WpfExercise.ViewModels;
 
 public class MainWindowViewModel : BindableBase
 {
+    #region Private Fields        
+
+    private static readonly log4net.ILog Logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod()?.DeclaringType);
+
     private readonly IMonitorService _monitorService;
+    private readonly IDialogService _dialogService;
+
     private readonly object _lockObject = new();
 
-    public DelegateCommand ClearCommand { get; }
+    #endregion
 
-    public DelegateCommand WindowLoadedCommand { get; }
+    #region Constructor
 
-    public MainWindowViewModel(IMonitorService monitorService)
+    public MainWindowViewModel(IMonitorService monitorService, IDialogService dialogService)
     {
         _monitorService = monitorService;
+        _dialogService = dialogService;
 
         ClearCommand = new DelegateCommand(OnClear);
         WindowLoadedCommand = new DelegateCommand(OnWindowLoaded);
@@ -31,14 +39,9 @@ public class MainWindowViewModel : BindableBase
         BindingOperations.EnableCollectionSynchronization(_products, _lockObject);
     }
 
-    private async void OnWindowLoaded()
-    {
-        await _monitorService.MonitorFile();
+    #endregion
 
-        _monitorService.FileUpdatedEvent -= MonitorServiceOnFileUpdated;
-
-        Application.Current.Shutdown();
-    }
+    #region Properties
 
     private ObservableRangeCollection<Product> _products;
     public ObservableRangeCollection<Product> Products
@@ -47,6 +50,54 @@ public class MainWindowViewModel : BindableBase
         set => SetProperty(ref _products, value);
     }
 
+    #endregion
+
+    #region Commands
+    public DelegateCommand ClearCommand { get; }
+
+    public DelegateCommand WindowLoadedCommand { get; }
+
+    #endregion
+
+    #region Command Actions
+
+    /// <summary>
+    /// Called on Window Loaded event
+    /// </summary>
+    private async void OnWindowLoaded()
+    {
+        try
+        {
+            await _monitorService.MonitorFile();
+
+            _monitorService.FileUpdatedEvent -= MonitorServiceOnFileUpdated;
+
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex.Message, ex);
+            _dialogService.Show(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Called when user clicks the clear button
+    /// </summary>
+    private void OnClear()
+    {
+        UpdateProducts(null);
+    }
+
+    #endregion
+
+    #region Events methods
+
+    /// <summary>
+    /// Called on FileUpdatedEvent when the monitor service reports that the json file has changed
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void MonitorServiceOnFileUpdated(object? sender, FileUpdatedEventArgs e)
     {
         Application.Current.Dispatcher.Invoke(() =>
@@ -55,16 +106,22 @@ public class MainWindowViewModel : BindableBase
         });
     }
 
+    #endregion
+
+    #region Methods
+
+    /// <summary>
+    /// Cancel the monitor service when the main window is closed
+    /// </summary>
     public void Cancel()
     {
         _monitorService.Cancel();
     }
 
-    private void OnClear()
-    {
-        UpdateProducts(null);
-    }
-
+    /// <summary>
+    /// Update the list of products in the UI
+    /// </summary>
+    /// <param name="products"></param>
     private void UpdateProducts(List<Product>? products)
     {
         lock (_lockObject)
@@ -75,4 +132,6 @@ public class MainWindowViewModel : BindableBase
                 Products.ReplaceRange(products);
         }
     }
+
+    #endregion
 }
