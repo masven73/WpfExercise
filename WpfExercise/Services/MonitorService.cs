@@ -17,7 +17,7 @@ public class FileUpdatedEventArgs : EventArgs
 
 public interface IMonitorService
 {
-    Task MonitorFile();
+    Task MonitorFileAsync();
 
     void Cancel();
 
@@ -68,14 +68,14 @@ public class MonitorService : IMonitorService
     /// </summary>
     /// <returns></returns>
     /// <exception cref="FileNotFoundException"></exception>
-    public async Task MonitorFile()
+    public async Task MonitorFileAsync()
     {
         Logger.Info("Starting Monitor Service");
 
         if (!File.Exists(JsonFileName))
             throw new FileNotFoundException();
 
-        await Task.Run(() => MonitorJsonFile(_cts.Token));
+        await Task.Run(() => MonitorJsonFileAsync(_cts.Token));
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public class MonitorService : IMonitorService
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns></returns>
-    private async Task MonitorJsonFile(CancellationToken ct)
+    private async Task MonitorJsonFileAsync(CancellationToken ct)
     {
         try
         {

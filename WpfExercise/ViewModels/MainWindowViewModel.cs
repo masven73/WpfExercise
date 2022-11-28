@@ -68,7 +68,7 @@ public class MainWindowViewModel : BindableBase
     {
         try
         {
-            await _monitorService.MonitorFile();
+            await _monitorService.MonitorFileAsync();
 
             _monitorService.FileUpdatedEvent -= MonitorServiceOnFileUpdated;
 

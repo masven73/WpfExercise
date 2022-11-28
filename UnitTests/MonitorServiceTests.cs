@@ -62,7 +62,7 @@ public class MonitorServiceTests
             resetEvent.Set();
         };
 
-        var monitorFileTask = monitorService.MonitorFile();
+        var monitorFileTask = monitorService.MonitorFileAsync();
 
         var eventReceived = resetEvent.WaitOne(TimeSpan.FromSeconds(1));
         Assert.True(eventReceived);
