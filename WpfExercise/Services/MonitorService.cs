@@ -96,6 +96,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
+            _previousHash = HashCalculator.ComputeHash(JsonFileName);
             GetAndReportProducts();
 
             var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));

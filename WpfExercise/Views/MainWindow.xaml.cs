@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel;
+using System.Windows;
 using WpfExercise.ViewModels;
 
 namespace WpfExercise.Views;
 
-public partial class MainWindow
+public partial class MainWindow : Window
 {
     public MainWindow()
     {
